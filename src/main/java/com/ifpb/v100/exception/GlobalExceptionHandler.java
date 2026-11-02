@@ -1,5 +1,8 @@
 package com.ifpb.v100.exception;
 
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.exc.InvalidFormatException;
+import com.fasterxml.jackson.databind.exc.MismatchedInputException;
 import com.ifpb.v100.dto.ErroResponseDTO;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,21 +16,28 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ErroResponseDTO> handleHttpMessageNotReadable(HttpMessageNotReadableException ex) {
-        String msg = ex.getMessage() != null ? ex.getMessage().toLowerCase() : "";
-        
-        // Distingue erro de sintaxe pura (JSON quebrado) de tipos errados (ex: texto em vez de número)
-        if (msg.contains("syntax") || msg.contains("unexpected end-of-input") || msg.contains("parseexception")) {
-            ErroResponseDTO erro = new ErroResponseDTO("INVALID_JSON", "O corpo da requisição contém um JSON sintaticamente inválido.");
+        Throwable cause = ex.getCause();
+
+        //Erro de sintaxe de JSON quebrado (ex: chave não fechada, vírgula sobrando)
+        if (cause instanceof JsonParseException) {
+            ErroResponseDTO erro = new ErroResponseDTO("INVALID_JSON", "O corpo da requisição não é um JSON válido.");
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(erro);
         }
 
-        ErroResponseDTO erro = new ErroResponseDTO("INVALID_INPUT", "Os campos 'a' e 'b' devem ser números finitos válidos.");
+        //Erro de tipo de dados (ex: String no lugar de número) ou campo incompatível
+        if (cause instanceof InvalidFormatException || cause instanceof MismatchedInputException) {
+            ErroResponseDTO erro = new ErroResponseDTO("INVALID_INPUT", "Os campos 'a' e 'b' devem ser números.");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(erro);
+        }
+
+        //Fallback para falhas de leitura genéricas do parser
+        ErroResponseDTO erro = new ErroResponseDTO("INVALID_JSON", "O corpo da requisição não é um JSON válido.");
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(erro);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErroResponseDTO> handleValidationException(MethodArgumentNotValidException ex) {
-        ErroResponseDTO erro = new ErroResponseDTO("INVALID_INPUT", "Os campos 'a' e 'b' são obrigatórios e devem ser preenchidos.");
+        ErroResponseDTO erro = new ErroResponseDTO("INVALID_INPUT", "Os campos 'a' e 'b' são obrigatórios.");
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(erro);
     }
 
