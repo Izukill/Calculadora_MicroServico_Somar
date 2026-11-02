@@ -1,3 +1,7 @@
+package com.ifpb.v100.Controller;
+
+import com.ifpb.v100.dto.SomarRequestDTO;
+import com.ifpb.v100.dto.SomarResponseDTO;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -11,12 +15,7 @@ public class SomarController {
 
     @PostMapping
     public ResponseEntity<SomarResponseDTO> somar(@Valid @RequestBody SomarRequestDTO request) {
-        //o contrato aceita inteiros, decimais e negativos.
-        Double resultado = request.getA() + request.getB();
-        
-        SomarResponseDTO response = new SomarResponseDTO();
-        response.setResultado(resultado);
-        
-        return ResponseEntity.ok(response);
+        Double resultado = request.a() + request.b();
+        return ResponseEntity.ok(new SomarResponseDTO(resultado));
     }
 }
