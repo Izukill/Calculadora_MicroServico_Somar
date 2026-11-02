@@ -1,8 +1,5 @@
 package com.ifpb.v100.exception;
 
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.exc.InvalidFormatException;
-import com.fasterxml.jackson.databind.exc.MismatchedInputException;
 import com.ifpb.v100.dto.ErroResponseDTO;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,22 +13,16 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ErroResponseDTO> handleHttpMessageNotReadable(HttpMessageNotReadableException ex) {
-        Throwable cause = ex.getCause();
+        String msg = ex.getMessage() != null ? ex.getMessage().toLowerCase() : "";
 
-        //Erro de sintaxe de JSON quebrado (ex: chave não fechada, vírgula sobrando)
-        if (cause instanceof JsonParseException) {
+        // Se a mensagem indicar erro de parsing/sintaxe no JSON (como chave não fechada)
+        if (msg.contains("jsonparseexception") || msg.contains("unexpected end-of-input") || msg.contains("syntax")) {
             ErroResponseDTO erro = new ErroResponseDTO("INVALID_JSON", "O corpo da requisição não é um JSON válido.");
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(erro);
         }
 
-        //Erro de tipo de dados (ex: String no lugar de número) ou campo incompatível
-        if (cause instanceof InvalidFormatException || cause instanceof MismatchedInputException) {
-            ErroResponseDTO erro = new ErroResponseDTO("INVALID_INPUT", "Os campos 'a' e 'b' devem ser números.");
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(erro);
-        }
-
-        //Fallback para falhas de leitura genéricas do parser
-        ErroResponseDTO erro = new ErroResponseDTO("INVALID_JSON", "O corpo da requisição não é um JSON válido.");
+        // Para falhas de coercão/tipo de dados (ex: String no lugar de número barrado pelo allow-coercion)
+        ErroResponseDTO erro = new ErroResponseDTO("INVALID_INPUT", "Os campos 'a' e 'b' devem ser números.");
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(erro);
     }
 
