@@ -12,3 +12,4 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
   - Interceptação de falhas de tipagem ou campos obrigatórios ausentes, retornando HTTP `400 Bad Request` com o código `INVALID_INPUT`.
   - Interceptação de falhas de sintaxe no envio do JSON, retornando HTTP `400 Bad Request` com o código `INVALID_JSON`.
 - **Conteinerização:** Criação do `Dockerfile` na raiz do projeto para empacotamento da aplicação Java, isolamento de ambiente e execução padronizada.
+- **Tratamento de campo inválido:** Criação da restrição de apenas numeros na requisição no JSON, não permitando ex: a = "5"
